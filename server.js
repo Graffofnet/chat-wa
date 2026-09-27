@@ -4,10 +4,24 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const path = require('path');
 
-const app = express();
-app.use(cors());
-app.use(express.static(path.join(__dirname, 'public')));
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'chat.html')));
+// detect-json — необязательный модуль для cPanel (Setup Node.js App):
+// если он установлен, берём у него готовый express-«app», чтобы панель
+// хостинга могла мониторить и перезапускать приложение. Если его нет —
+// спокойно работаем как обычный standalone-сервер (npm start).
+let app = null;
+try {
+    ({ app } = require('detect-json')); // eslint-disable-line
+} catch (e) { /* optional dependency, safe to ignore */ }
+
+if (!app) {
+    app = express();
+    app.use(cors());
+}
+
+// ВАЖНО для виртуального хостинга: статика отдаётся из той же папки,
+// где лежит server.js (__dirname), а не из несуществующей папки "public".
+app.use(express.static(__dirname));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -15,8 +29,10 @@ const io = new Server(server, {
     maxHttpBufferSize: 1e8
 });
 
-const HOST = '127.0.0.1';
-const PORT = 3000;
+// On virtual hosting (cPanel/NodeJS Selector) the port comes from the
+// environment variable PORT. Binding to 127.0.0.1 is required there.
+const HOST = process.env.HOST || '127.0.0.1';
+const PORT = parseInt(process.env.PORT || '3000', 10);
 const DEFAULT_ROOM = 'general';
 
 // messageId -> { ownerId, roomId, reactions: Map(emoji -> Set(userId)) }
@@ -97,5 +113,5 @@ io.on('connection', (socket) => {
 });
 
 server.listen(PORT, HOST, () => {
-    console.log(`✅ Сервер запущен: http://localhost:${PORT}`);
+    console.log(`✅ Сервер запущен: http://${HOST}:${PORT}`);
 });

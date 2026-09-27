@@ -1,15 +1,20 @@
 {
   "name": "wa-chat-server",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "WhatsApp-style voice chat (Socket.IO)",
+  "main": "server.js",
   "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "engines": {
+    "node": ">=14"
+  },
   "dependencies": {
     "cors": "^2.8.6",
     "express": "^5.2.1",

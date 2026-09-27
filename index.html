@@ -336,7 +336,15 @@
     <div class="toast" id="toast"></div>
 </div>
 
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<!-- Socket.IO клиент отдаётся самим же сервером (библиотека socket.io
+     автоматически раздает /socket.io/socket.io.js). Это надёжнее CDN на
+     виртуальном хостинге, а версия всегда совпадает с версией сервера. -->
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    // Аварийная копия: если по какой-то причине сервер не отдал клиент,
+    // подгружаем его с CDN и пересоздаём соединение.
+    if (typeof io === 'undefined') document.write('<script src="https:\/\/cdn.socket.io\/4.8.1\/socket.io.min.js"><\/script>');
+</script>
 <script>
     // ========== ID ПОЛЬЗОВАТЕЛЯ (кэш) ==========
     function generateUUID() {
@@ -469,7 +477,15 @@
             };
         } catch (e) { alert('Необходимо разрешить доступ к микрофону!'); }
     }
-    initRecorder();
+    // Запрашиваем микрофон НЕ сразу при загрузке, а по первому касанию кнопки:
+    // браузеры блокируют getUserMedia без действия пользователя, а автозапрос
+    // при загрузке страницы показывал всплывающее окно «разрешить микрофон»
+    // всем посетителям, даже тем, кто записывать ничего не собирается.
+    let recorderReady = false;
+    function ensureRecorder() {
+        if (!recorderReady) { recorderReady = true; initRecorder(); }
+    }
+    recordBtn.addEventListener('pointerdown', ensureRecorder);
 
     recordBtn.addEventListener('mousedown', startRecording);
     recordBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startRecording(); });
